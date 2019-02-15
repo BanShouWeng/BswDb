@@ -1,2 +1,2 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="db.bsw.dblibrary" />
+    package="com.bsw.dblibrary" />
