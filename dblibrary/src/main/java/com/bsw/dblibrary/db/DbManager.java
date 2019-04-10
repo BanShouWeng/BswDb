@@ -13,6 +13,7 @@ import com.bsw.dblibrary.Logger;
  *
  * @author bsw
  */
+
 public class DbManager {
     private Context context;
     private SQLiteDatabase mSQLiteDatabase;

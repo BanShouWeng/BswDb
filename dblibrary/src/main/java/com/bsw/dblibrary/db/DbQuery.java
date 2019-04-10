@@ -163,6 +163,9 @@ public class DbQuery<T> extends DbBase {
         }
         reflect(clz);
         Cursor cursor = getCursor();
+        if (null == cursor) {
+            return null;
+        }
         while (cursor.moveToNext()) {
             try {
                 Constructor c0 = clz.getDeclaredConstructor();

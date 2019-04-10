@@ -6,6 +6,7 @@ import android.database.Cursor;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 /**
  * 数据库工具
@@ -35,12 +36,12 @@ public class DbUtils extends DbBase {
      * @param onTransaction 异步接口
      */
     public void executeTransaction(final OnTransaction onTransaction) {
-        new Thread(new Runnable() {
+        Executors.newFixedThreadPool(3).execute(new Runnable() {
             @Override
             public void run() {
                 onTransaction.execute(DbUtils.this);
             }
-        }).start();
+        });
     }
 
     /**
