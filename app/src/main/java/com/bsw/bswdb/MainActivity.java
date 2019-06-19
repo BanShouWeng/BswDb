@@ -1,13 +1,12 @@
 package com.bsw.bswdb;
 
-import android.annotation.SuppressLint;
 import android.os.Bundle;
-import android.os.Looper;
-import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.bsw.bswdb.DbDemoBean.Dog;
 import com.bsw.bswdb.DbDemoBean.Person;
@@ -15,6 +14,7 @@ import com.bsw.dblibrary.Logger;
 import com.bsw.dblibrary.db.DbBase;
 import com.bsw.dblibrary.db.DbQuery;
 import com.bsw.dblibrary.db.DbUtils;
+import com.example.mylibrary.BswFilterList;
 
 import java.util.List;
 import java.util.UUID;
@@ -31,6 +31,16 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         dbUtils = new DbUtils(getApplicationContext());
+
+        BswFilterList<KotlinPerson> people = new BswFilterList<>();
+        people.add(new KotlinPerson("john", 5, true));
+        people.add(new KotlinPerson("tony", 95, true));
+        people.add(new KotlinPerson("jerry", 20, false));
+        people.add(new KotlinPerson("lina", 26, false));
+
+        Log.i(getClass().getSimpleName(), people.query().sort("age", BswFilterList.DESC).getAll().toString());
+        Log.i(getClass().getSimpleName(), people.query().putParams("age", 5).putParams("sex", false).setQueryType(BswFilterList.OR).getAll().toString());
+        Log.i(getClass().getSimpleName(), people.query().putParams("age", 5).putParams("sex", false).setQueryType(BswFilterList.OR).getFirst().toString());
     }
 
     /**
@@ -178,5 +188,26 @@ public class MainActivity extends AppCompatActivity {
                 dbUtils.clear(Person.class);
             }
         });
+    }
+
+    class KotlinPerson {
+        private int age;
+        private String name;
+        private Boolean sex;
+
+        public KotlinPerson(String name, int age, Boolean sex) {
+            this.age = age;
+            this.name = name;
+            this.sex = sex;
+        }
+
+        @Override
+        public String toString() {
+            return "KotlinPerson{" +
+                    "age=" + age +
+                    ", name='" + name + '\'' +
+                    ", sex=" + sex +
+                    '}';
+        }
     }
 }

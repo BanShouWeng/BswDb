@@ -1,5 +1,5 @@
 apply plugin: 'com.android.library'
-apply plugin: 'com.novoda.bintray-release'
+//apply plugin: 'com.novoda.bintray-release'
 
 android {
     compileSdkVersion 28
@@ -32,19 +32,19 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 }
 
-tasks.withType(Javadoc) {//防止编码问题
-    options.addStringOption('Xdoclint:none', '-quiet')
-    options.addStringOption('encoding', 'UTF-8')
-    options.addStringOption('charSet', 'UTF-8')
-}
-
-publish {
-    userOrg = 'bswlm' //bintray账户下某个组织id
-    repoName = 'bswDb'      //远程仓库名字,不指明，默认是上传到maven
-    groupId = 'com.bsw'     //maven仓库下库的包名，一般为模块包名
-    artifactId = 'dblibrary' //项目名称
-    publishVersion = '1.0.0' //版本号
-    desc = '基于SQLite的方realm封装' //项目介绍，可以不写
-    website = 'https://github.com/BanShouWeng/BswDb' //项目主页，可以不写
-    licences = ['Apache-2.0']
-}
+//tasks.withType(Javadoc) {//防止编码问题
+//    options.addStringOption('Xdoclint:none', '-quiet')
+//    options.addStringOption('encoding', 'UTF-8')
+//    options.addStringOption('charSet', 'UTF-8')
+//}
+//
+//publish {
+//    userOrg = 'bswlm' //bintray账户下某个组织id
+//    repoName = 'bswDb'      //远程仓库名字,不指明，默认是上传到maven
+//    groupId = 'com.bsw'     //maven仓库下库的包名，一般为模块包名
+//    artifactId = 'dblibrary' //项目名称
+//    publishVersion = '1.0.0' //版本号
+//    desc = '基于SQLite的仿realm封装' //项目介绍，可以不写
+//    website = 'https://github.com/BanShouWeng/BswDb' //项目主页，可以不写
+//    licences = ['Apache-2.0']
+//}

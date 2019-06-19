@@ -1,8 +1,9 @@
 package com.bsw.dblibrary.db;
 
 import android.content.Context;
-import android.support.annotation.StringDef;
 import android.text.TextUtils;
+
+import androidx.annotation.StringDef;
 
 import com.bsw.dblibrary.Logger;
 import com.google.gson.Gson;
