@@ -1,1 +1,1 @@
-include ':app', ':dblibrary', ':BswList'
+include ':app', ':dblibrary'

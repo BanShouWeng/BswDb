@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.bsw.dblibrary.Logger;
+import com.bsw.dblibrary.filterList.BswFilterList;
+import com.google.gson.Gson;
 
 /**
  * 数据库查询类
@@ -67,60 +69,19 @@ public class DbQuery<T> extends DbBase {
      * @param value value
      * @return 查询类
      */
-    public DbQuery<T> putParams(String key, String value) {
+    public DbQuery<T> putParams(String key, Object value) {
         initQueryMap();
         queryList.add(new Param(key, value));
         return this;
     }
 
     /**
-     * 添加参数：Long
+     * 排序
      *
-     * @param key   key
-     * @param value value
+     * @param key      排序依据
+     * @param sortType 排序方式
      * @return 查询类
      */
-    public DbQuery<T> putParams(String key, Long value) {
-        putParams(key, String.valueOf(value));
-        return this;
-    }
-
-    /**
-     * 添加参数：Integer
-     *
-     * @param key   key
-     * @param value value
-     * @return 查询类
-     */
-    public DbQuery<T> putParams(String key, Integer value) {
-        putParams(key, String.valueOf(value));
-        return this;
-    }
-
-    /**
-     * 添加参数：Short
-     *
-     * @param key   key
-     * @param value value
-     * @return 查询类
-     */
-    public DbQuery<T> putParams(String key, Short value) {
-        putParams(key, String.valueOf(value));
-        return this;
-    }
-
-    /**
-     * 添加参数：Boolean
-     *
-     * @param key   key
-     * @param value value
-     * @return 查询类
-     */
-    public DbQuery<T> putParams(String key, Boolean value) {
-        putParams(key, String.valueOf(value));
-        return this;
-    }
-
     public DbQuery<T> sort(String key, @SortType String sortType) {
         sortString = key.concat(sortType);
         return this;
@@ -139,10 +100,10 @@ public class DbQuery<T> extends DbBase {
         try {
             Cursor cursor = dbUtils.mDbManager.mQuery(tableName, null
                     , primaryKeyPojo.getName().concat(" like ?")
-                    , new String[] {primaryKeyPojo.getValueString()}
+                    , new String[]{primaryKeyPojo.getValueString()}
                     , null, null, dbUtils.UPDATE_TIME.concat(DESC));
             int count = cursor.getCount();
-            if (! cursor.isClosed()) {
+            if (!cursor.isClosed()) {
                 cursor.close();
             }
             return count != 0;
@@ -172,7 +133,7 @@ public class DbQuery<T> extends DbBase {
                 c0.setAccessible(true);
                 Object o = c0.newInstance();
                 insertValue(o, cursor);
-                if (! cursor.isClosed()) {
+                if (!cursor.isClosed()) {
                     cursor.close();
                 }
                 //noinspection unchecked
@@ -199,17 +160,17 @@ public class DbQuery<T> extends DbBase {
      *
      * @return Bean列表
      */
-    public List<T> getAll() {
+    public BswFilterList<T> getAll() {
         Map<String, String[]> tableMap = getDB(dbUtils.mContext);
         if (null == tableMap) {
             return null;
         }
         reflect(clz);
         Cursor cursor = getCursor();
-        if (null == cursor || cursor.getCount() == 0){
+        if (null == cursor || cursor.getCount() == 0) {
             return null;
         }
-        List<T> list = new ArrayList<>();
+        BswFilterList<T> list = new BswFilterList<>();
         while (cursor.moveToNext()) {
             try {
                 Constructor c0 = clz.getDeclaredConstructor();
@@ -228,7 +189,7 @@ public class DbQuery<T> extends DbBase {
                 logger.e(getName(), e);
             }
         }
-        if (! cursor.isClosed()) {
+        if (!cursor.isClosed()) {
             cursor.close();
         }
         return list;
@@ -246,7 +207,7 @@ public class DbQuery<T> extends DbBase {
         if (null != queryList && queryList.size() > 0) {
             for (Param param : queryList) {
                 selectionBuffer.append(param.key).append("=?".concat(queryType));
-                selectionArgList.add(param.value);
+                selectionArgList.add(param.getValue());
             }
             String selection = selectionBuffer.toString();
             String[] selectionArgs = new String[selectionArgList.size()];
@@ -302,11 +263,15 @@ public class DbQuery<T> extends DbBase {
 
     class Param {
         String key;
-        String value;
+        Object value;
 
-        public Param(String key, String value) {
+        Param(String key, Object value) {
             this.key = key;
             this.value = value;
+        }
+
+        public String getValue() {
+            return new Gson().toJson(value);
         }
     }
 }

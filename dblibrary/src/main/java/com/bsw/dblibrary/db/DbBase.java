@@ -1,9 +1,8 @@
 package com.bsw.dblibrary.db;
 
 import android.content.Context;
+import android.support.annotation.StringDef;
 import android.text.TextUtils;
-
-import androidx.annotation.StringDef;
 
 import com.bsw.dblibrary.Logger;
 import com.google.gson.Gson;
@@ -125,7 +124,7 @@ public class DbBase {
             throw new IllegalArgumentException("This class does not implement interfaces @DbClass");
         }
         // 获取类上的注解
-        DbClass annotation = (DbClass) clz.getAnnotation(DbClass.class);
+        DbClass annotation = clz.getAnnotation(DbClass.class);
         // 输出注解上的属性
         String annotationName = annotation.name();
         tableName = TextUtils.isEmpty(annotationName) ? clz.getSimpleName() : annotationName;

@@ -220,11 +220,11 @@ public class DbManager {
         } else {
             logger.e(getName(), "closeAll: mSQLiteOpenHelper已关闭");
         }
-        if (mSQLiteDatabase != null && mSQLiteDatabase.isOpen()) {
-            mSQLiteDatabase.close();
-        } else {
-            logger.e(getName(), "closeAll: mSQLiteDatabase已关闭");
-        }
+//        if (mSQLiteDatabase != null && mSQLiteDatabase.isOpen()) {
+//            mSQLiteDatabase.close();
+//        } else {
+//            Log.e(TAG, "closeAll: mSQLiteDatabase已关闭");
+//        }
     }
 
     SqlMaker getSqlMaker() {
