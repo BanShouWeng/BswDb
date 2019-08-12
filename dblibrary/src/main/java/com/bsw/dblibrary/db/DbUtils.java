@@ -118,7 +118,7 @@ public class DbUtils extends DbBase {
      * @param <T> 泛型
      * @return 是插入还是更新：true为更新，false为插入
      */
-    private <T> boolean insert(T t) {
+    public <T> boolean insert(T t) {
         reflect(t);
         ContentValues contentValues = new ContentValues();
         DbCreate<T> dbCreate = null;

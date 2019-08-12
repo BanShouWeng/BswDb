@@ -1,19 +1,20 @@
 package com.bsw.bswdb;
 
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.bsw.bswdb.DbDemoBean.Person;
 import com.bsw.dblibrary.Logger;
 import com.bsw.dblibrary.db.DbBase;
 import com.bsw.dblibrary.db.DbQuery;
 import com.bsw.dblibrary.db.DbUtils;
-import com.bsw.dblibrary.filterList.BswFilterList;
-import com.bsw.dblibrary.filterList.BswListQuery;
+import com.bsw.dblibrary.dbFilterList.BswDbFilterList;
+import com.bsw.dblibrary.dbFilterList.BswDbListQuery;
 
 import java.util.List;
 
@@ -40,15 +41,16 @@ public class MainActivity extends AppCompatActivity {
 //        Log.i(getClass().getSimpleName(), people.query().putParams("age", 5).putParams("sex", false).setQueryType(KBswListQuery.OR).getAll().toString());
 //        Log.i(getClass().getSimpleName(), people.query().putParams("age", 5).putParams("sex", false).setQueryType(KBswListQuery.OR).getFirst().toString());
 
-        BswFilterList<KotlinPerson> people = new BswFilterList<>();
+        BswDbFilterList<KotlinPerson> people = new BswDbFilterList<>();
         people.add(new KotlinPerson("john", 5, true));
         people.add(new KotlinPerson("tony", 95, true));
         people.add(new KotlinPerson("jerry", 20, false));
         people.add(new KotlinPerson("lina", 26, false));
 
-        Log.i(getClass().getSimpleName(), people.query().sort("age", BswListQuery.DESC).getAll().toString());
-        Log.i(getClass().getSimpleName(), people.query().putParams("age", 5).putParams("sex", false).setQueryType(BswListQuery.OR).getAll().toString());
-        Log.i(getClass().getSimpleName(), people.query().putParams("age", 5).putParams("sex", false).setQueryType(BswListQuery.OR).getFirst().toString());
+        Log.i(getClass().getSimpleName(), people.query().sort("age", BswDbListQuery.DESC).getAll().toString());
+        Log.i(getClass().getSimpleName(), people.query().putParams("age", 5).putParams("sex", false).setQueryType(BswDbListQuery.OR).getAll().toString());
+        Log.i(getClass().getSimpleName(), people.query().putParams("age", 5).putParams("sex", false).setQueryType(BswDbListQuery.OR).getFirst().toString());
+
     }
 
     /**

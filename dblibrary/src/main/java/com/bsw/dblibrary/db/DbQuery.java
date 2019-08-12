@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.bsw.dblibrary.Logger;
-import com.bsw.dblibrary.filterList.BswFilterList;
+import com.bsw.dblibrary.dbFilterList.BswDbFilterList;
 import com.google.gson.Gson;
 
 /**
@@ -160,7 +160,7 @@ public class DbQuery<T> extends DbBase {
      *
      * @return Bean列表
      */
-    public BswFilterList<T> getAll() {
+    public BswDbFilterList<T> getAll() {
         Map<String, String[]> tableMap = getDB(dbUtils.mContext);
         if (null == tableMap) {
             return null;
@@ -170,7 +170,7 @@ public class DbQuery<T> extends DbBase {
         if (null == cursor || cursor.getCount() == 0) {
             return null;
         }
-        BswFilterList<T> list = new BswFilterList<>();
+        BswDbFilterList<T> list = new BswDbFilterList<>();
         while (cursor.moveToNext()) {
             try {
                 Constructor c0 = clz.getDeclaredConstructor();

@@ -18,5 +18,5 @@ public @interface PrimaryKey {
      *
      * @return 别名
      */
-    public String name() default "";
+    String name() default "";
 }
