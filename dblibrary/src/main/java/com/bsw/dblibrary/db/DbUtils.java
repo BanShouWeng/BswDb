@@ -55,7 +55,6 @@ public class DbUtils extends DbBase {
     }
 
     /**
-     *
      * @param t   被插入
      * @param <T> 泛型
      * @return 是插入还是更新：true为更新，false为插入
@@ -72,7 +71,7 @@ public class DbUtils extends DbBase {
      */
     public <T> void delete(T t) {
         reflectPrimaryKey(t);
-        mDbManager.mDelete(tableName, primaryKeyPojo.getName().concat("=?"), new String[] {primaryKeyPojo.getValueString()});
+        mDbManager.mDelete(tableName, primaryKeyPojo.getName().concat("=?"), new String[]{primaryKeyPojo.getValueString()});
     }
 
     /**
@@ -84,7 +83,7 @@ public class DbUtils extends DbBase {
     public <T> void delete(List<T> ts) {
         for (T t : ts) {
             reflectPrimaryKey(t);
-            mDbManager.mDelete(tableName, primaryKeyPojo.getName().concat("=?"), new String[] {primaryKeyPojo.getValueString()});
+            mDbManager.mDelete(tableName, primaryKeyPojo.getName().concat("=?"), new String[]{primaryKeyPojo.getValueString()});
         }
     }
 
@@ -122,7 +121,7 @@ public class DbUtils extends DbBase {
         reflect(t);
         ContentValues contentValues = new ContentValues();
         DbCreate<T> dbCreate = null;
-        if (! mDbManager.isTableExist(tableName)) {
+        if (!mDbManager.isTableExist(tableName)) {
             dbCreate = new DbCreate<>(this, tableName);
         }
         if (null == primaryKeyPojo) {
@@ -167,6 +166,10 @@ public class DbUtils extends DbBase {
                         contentValues.put(columnPojo.getName(), (Integer) columnPojo.getValue());
                         break;
                     case STRING:
+                        // 避免内部类传入Activity或者Fragment
+                        if (columnPojo.getName().contains("this")) {
+                            break;
+                        }
                         contentValues.put(columnPojo.getName(), (String) columnPojo.getValue());
                         break;
                     case DOUBLE:
@@ -196,13 +199,13 @@ public class DbUtils extends DbBase {
         if (null != dbCreate) {
             dbCreate.create();
         }
-        if (! contentValues.containsKey(UPDATE_TIME)) {
+        if (!contentValues.containsKey(UPDATE_TIME)) {
             contentValues.put(UPDATE_TIME, System.currentTimeMillis());
         }
         boolean hasBean = new DbQuery<>(this, t.getClass()).hasBean(t);
         if (hasBean) {
             logger.i(getName(), "has this ".concat(t.getClass().getSimpleName()));
-            mDbManager.mUpdate(tableName, contentValues, primaryKeyPojo.getName().concat("=?"), new String[] {primaryKeyPojo.getValueString()});
+            mDbManager.mUpdate(tableName, contentValues, primaryKeyPojo.getName().concat("=?"), new String[]{primaryKeyPojo.getValueString()});
         } else {
             logger.i(getName(), "does not have ".concat(t.getClass().getSimpleName()));
             mDbManager.mInsert(tableName, "", contentValues);

@@ -11,8 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 class BswDbReflectUtils<T> {
-    private final String KEY = "key";
-    private final String VALUE = "value";
+    private final String PRIMARY_KEY_PARAM = "primary_key_param";
 
     /**
      * 解析后的属性集合
@@ -22,16 +21,15 @@ class BswDbReflectUtils<T> {
     /**
      * List反射解析结果缓存，防止多次反射浪费资源
      */
-    private Map<T, Map<String, Object>> reflectResultMap = new HashMap<>();
+    private Map<T, Map<String, BswDbReflectParam>> reflectResultMap = new HashMap<>();
     /**
      * List反射解析后，主键以及对应的位置，用于根据主键替换Bean
      */
     private Map<Object, Integer> reflectPrimaryKeyMap = new HashMap<>();
-
     /**
-     * 主键字符串
+     * 当主键变动时，调整缓存列表
      */
-    private String primaryKey;
+    private Map<Object, T> primaryKeyTMap = new HashMap<>();
 
     /**
      * 反射解析泛型类
@@ -50,7 +48,7 @@ class BswDbReflectUtils<T> {
     void reflectList(BswDbFilterList<T> list) {
         for (int i = 0; i < list.size(); i++) {
             T t = list.get(i);
-            Map<String, Object> result = reflectT(t, i);
+            Map<String, BswDbReflectParam> result = reflectT(t, i);
             if (null != result)
                 reflectResultMap.put(t, result);
         }
@@ -62,7 +60,7 @@ class BswDbReflectUtils<T> {
      * @param t 待解析泛型
      * @return 解析的属性名与属性值的map
      */
-    Map<String, Object> reflectT(T t) {
+    Map<String, BswDbReflectParam> reflectT(T t) {
         return reflectT(t, null);
     }
 
@@ -73,19 +71,21 @@ class BswDbReflectUtils<T> {
      * @param index 被解析的类在列表中的坐标
      * @return 解析的属性名与属性值的map
      */
-    Map<String, Object> reflectT(T t, Integer index) {
+    private synchronized Map<String, BswDbReflectParam> reflectT(T t, Integer index) {
         if (null == reflectFields) {
             reflectClass(t.getClass());
         }
-        Map<String, Object> reflectResult = new HashMap<>();
+        Map<String, BswDbReflectParam> reflectResult = new HashMap<>();
         for (Field field : reflectFields) {
             field.setAccessible(true);
             String key = null;
             try {
                 if (field.isAnnotationPresent(PrimaryKey.class)) {
                     key = field.getAnnotation(PrimaryKey.class).name();
-                    if (null != index)
+                    if (null != index) {
                         reflectPrimaryKeyMap.put(field.get(t), index);
+                        primaryKeyTMap.put(field.get(t), t);
+                    }
                 } else if (field.isAnnotationPresent(Require.class)) {
                     key = field.getAnnotation(Require.class).name();
                 }
@@ -96,7 +96,7 @@ class BswDbReflectUtils<T> {
                     continue;
                 }
                 // 存储参数自身的属性名
-                reflectResult.put(key, field.get(t));
+                reflectResult.put(key, new BswDbReflectParam(key, field.get(t), field));
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
                 return null;
@@ -111,7 +111,7 @@ class BswDbReflectUtils<T> {
      * @param t 待解析泛型
      * @return 解析的属性名与属性值的map
      */
-    Map<String, Object> getPrimaryKey(T t) {
+    private synchronized Map<String, BswDbReflectParam> reflectPrimaryKey(T t) {
         if (null == reflectFields) {
             reflectClass(t.getClass());
         }
@@ -125,10 +125,33 @@ class BswDbReflectUtils<T> {
                     if (TextUtils.isEmpty(key)) {
                         key = field.getName();
                     }
-                    Map<String, Object> map = new HashMap<>();
-                    map.put(KEY, key);
-                    map.put(VALUE, field.get(t));
+                    Map<String, BswDbReflectParam> map = new HashMap<>();
+                    map.put(PRIMARY_KEY_PARAM, new BswDbReflectParam(key, field.get(t), field));
                     return map;
+                }
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 解析泛型属性
+     *
+     * @param t 待解析泛型
+     * @return 主键对应的对象
+     */
+    private synchronized Object getPrimaryKey(T t) {
+        if (null == reflectFields) {
+            reflectClass(t.getClass());
+        }
+
+        for (Field field : reflectFields) {
+            field.setAccessible(true);
+            try {
+                if (field.isAnnotationPresent(PrimaryKey.class)) {
+                    return field.get(t);
                 }
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
@@ -145,30 +168,99 @@ class BswDbReflectUtils<T> {
      * @param t  被检索bean
      * @return 匹配的位置
      */
-    Integer getPrimaryKeyMatchT(BswDbFilterList<T> ts, T t) {
+    synchronized Integer getPrimaryKeyMatchT(BswDbFilterList<T> ts, T t) {
         Integer index = null;
-        Map<String, Object> primaryKeyMap = getPrimaryKey(t);
-        if (primaryKeyMap.size() > 0) {
-            String key = (String) primaryKeyMap.get(KEY);
-            Object value = primaryKeyMap.get(VALUE);
-            if (null == value) {
-                return index;
-            }
-            for (int i = 0; i < ts.size(); i++) {
-                Map<String, Object> map = getReflectResult(ts.get(i));
-                if (value.equals(map.get(key))) {
-                    index = i;
-                    break;
+        Map<String, BswDbReflectParam> primaryKeyMap = reflectPrimaryKey(t);
+        if (null != primaryKeyMap && primaryKeyMap.size() > 0) {
+            try {
+                BswDbReflectParam param = primaryKeyMap.get(PRIMARY_KEY_PARAM);
+                if (null == param) {
+                    return null;
                 }
+                String key = param.getKey();
+                Object value = param.getValue();
+                if (null == value) {
+                    return null;
+                }
+                for (int i = 0; i < ts.size(); i++) {
+                    Map<String, BswDbReflectParam> map = getReflectResult(ts.get(i));
+                    BswDbReflectParam reflectParam = map.get(key);
+                    if (null == reflectParam) {
+                        continue;
+                    }
+                    if (value.equals(reflectParam.getValue())) {
+                        index = i;
+                        break;
+                    }
+                }
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+                return null;
             }
         }
         return index;
     }
 
-    Map<String, Object> getReflectResult(T t) {
+    /**
+     * 获取T的解析结果
+     *
+     * @param t 泛型
+     * @return 解析的结果
+     */
+    Map<String, BswDbReflectParam> getReflectResult(T t) {
         if (null == reflectResultMap) {
-            return null;
+            Map<String, BswDbReflectParam> paramMap = reflectT(t);
+            reflectResultMap.put(t, paramMap);
+            return paramMap;
         }
-        return reflectResultMap.get(t);
+        Map<String, BswDbReflectParam> paramMap = reflectResultMap.get(t);
+        if (null == paramMap) {
+            paramMap = reflectT(t);
+            reflectResultMap.put(t, paramMap);
+        }
+        return paramMap;
+    }
+
+    /**
+     * 判断集合中是否包含待检测对应主键对应对象
+     *
+     * @param list 待检测集合
+     * @param t    被验证对象
+     * @return 是否包含
+     */
+    boolean has(BswDbFilterList<T> list, T t) {
+        for (T tItem : list) {
+            try {
+                if (getPrimaryKey(t).equals(getPrimaryKey(tItem))) {
+                    return true;
+                }
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 当数据改变，更新缓存
+     *
+     * @param changeData 改变的数据，或数据对应的主键
+     */
+    void dataChanged(Object changeData) {
+        if (null != changeData) {
+            T t = primaryKeyTMap.get(changeData);
+            if (null != t) {
+                primaryKeyTMap.remove(changeData);
+                reflectPrimaryKeyMap.remove(changeData);
+                reflectResultMap.remove(t);
+            } else {
+                //noinspection SuspiciousMethodCalls
+                reflectResultMap.remove(changeData);
+                //noinspection unchecked
+                Object primaryKey = getPrimaryKey((T) changeData);
+                primaryKeyTMap.remove(primaryKey);
+                reflectPrimaryKeyMap.remove(primaryKey);
+            }
+        }
     }
 }

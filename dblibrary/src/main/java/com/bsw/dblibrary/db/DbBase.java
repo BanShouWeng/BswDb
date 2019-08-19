@@ -300,7 +300,6 @@ public class DbBase {
         if (null == spUtils) {
             spUtils = SPUtils.getInstance(mContext);
         }
-        Gson gson = new Gson();
         String tableJson = spUtils.getString(DB_TABLES);
         String sqlJson = spUtils.getString(DB_SQLS);
         if (TextUtils.isEmpty(tableJson) || TextUtils.isEmpty(sqlJson)) {

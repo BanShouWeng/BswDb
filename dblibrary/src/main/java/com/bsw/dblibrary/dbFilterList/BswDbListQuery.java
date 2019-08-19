@@ -21,10 +21,10 @@ public class BswDbListQuery<T> {
     private BswDbReflectUtils<T> reflectUtils;
 
     BswDbListQuery(BswDbFilterList<T> list) {
-        this(null, list);
+        this(list, null);
     }
 
-    BswDbListQuery(ListFilterAdapter<T> filterAdapter, BswDbFilterList<T> list) {
+    BswDbListQuery(BswDbFilterList<T> list, ListFilterAdapter<T> filterAdapter) {
         this.list = list;
         reflectUtils = list.getReflectUtils();
         this.filterAdapter = filterAdapter;
@@ -292,19 +292,28 @@ public class BswDbListQuery<T> {
         return null;
     }
 
+    public boolean has(T t) {
+        // 反射一次解析所有的List，避免多次反射消耗资源
+        return reflectUtils.has(list, t);
+    }
+
     /**
      * 与判断
      *
      * @param t 待判断类
      * @return 是否满足与条件
      */
-    private boolean andJudge(T t) {
-        Map<String, Object> reflectResult = reflectUtils.getReflectResult(t);
+    private synchronized boolean andJudge(T t) {
+        Map<String, BswDbReflectParam> reflectResult = reflectUtils.getReflectResult(t);
         if (null == reflectResult) {
-            reflectResult = reflectUtils.reflectT(t);
+            return false;
         }
         for (BswDbQueryParam p : queryList) {
-            Object vReflect = reflectResult.get(p.getKey());
+            BswDbReflectParam param = reflectResult.get(p.getKey());
+            if (null == param) {
+                return false;
+            }
+            Object vReflect = param.getValue();
             boolean judge = p.judge(vReflect);
             // 若paramType没有问题，则根据当前判断是筛选条件的与判断，有一个不满足则返回，所以验证judge若为false，则不满足返回
             if (!judge) {
@@ -324,13 +333,17 @@ public class BswDbListQuery<T> {
      * @param t 待判断类
      * @return 是否满足或条件
      */
-    private boolean orJudge(T t) {
-        Map<String, Object> reflectResult = reflectUtils.getReflectResult(t);
+    private synchronized boolean orJudge(T t) {
+        Map<String, BswDbReflectParam> reflectResult = reflectUtils.getReflectResult(t);
         if (null == reflectResult) {
-            reflectResult = reflectUtils.reflectT(t);
+            return false;
         }
         for (BswDbQueryParam p : queryList) {
-            Object vReflect = reflectResult.get(p.getKey());
+            BswDbReflectParam param = reflectResult.get(p.getKey());
+            if (null == param) {
+                continue;
+            }
+            Object vReflect = param.getValue();
             boolean judge = p.judge(vReflect);
             // 用户自定义判断，由于或判断，因此判断结果取或
             if (null != filterAdapter) {
@@ -350,18 +363,22 @@ public class BswDbListQuery<T> {
      * @param list 排序的列表
      * @return 排序后的列表
      */
-    private BswDbFilterList<T> sortJudge(BswDbFilterList<T> list) {
+    private synchronized BswDbFilterList<T> sortJudge(BswDbFilterList<T> list) {
         if (TextUtils.isEmpty(sortKey)) {
             return list;
         } else {
             List<Object> sortJudgeList = new ArrayList<>();
             BswDbFilterList<T> sortList = new BswDbFilterList<>();
             for (T t : list) {
-                Map<String, Object> reflectResult = reflectUtils.getReflectResult(t);
+                Map<String, BswDbReflectParam> reflectResult = reflectUtils.getReflectResult(t);
                 if (null == reflectResult || reflectResult.size() == 0) {
                     continue;
                 }
-                Object item = reflectResult.get(sortKey);
+                BswDbReflectParam param = reflectResult.get(sortKey);
+                if (null == param) {
+                    continue;
+                }
+                Object item = param.getValue();
                 if (null == item) {
                     sortList.add(sortList.size(), t);
                 } else {

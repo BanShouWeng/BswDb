@@ -1,12 +1,17 @@
 package com.bsw.dblibrary.dbFilterList;
 
+import android.content.Context;
+
 import androidx.annotation.IntRange;
 
+import com.bsw.dblibrary.db.DbUtils;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class BswDbFilterList<T> extends ArrayList<T> {
-    public static final int TO_THE_END = -1;
+    static final int TO_THE_END = -1;
 
     /**
      * 反射工具
@@ -29,7 +34,6 @@ public class BswDbFilterList<T> extends ArrayList<T> {
      * 无参构造方法
      */
     public BswDbFilterList() {
-
     }
 
     /**
@@ -39,6 +43,15 @@ public class BswDbFilterList<T> extends ArrayList<T> {
      */
     public BswDbFilterList(List<T> list) {
         this.addAll(list);
+    }
+
+    /**
+     * 将List转为当前过滤列表
+     *
+     * @param list 待转换数组
+     */
+    public BswDbFilterList(T[] list) {
+        this.addAll(new ArrayList<>(Arrays.asList(list)));
     }
 
     /**
@@ -55,17 +68,37 @@ public class BswDbFilterList<T> extends ArrayList<T> {
      *
      * @return 搜索的类
      */
-    public BswDbListQuery<T> query(BswDbListQuery.ListFilterAdapter filterAdapter) {
-        return new BswDbListQuery<>(filterAdapter, this);
+    public BswDbListQuery<T> query(BswDbListQuery.ListFilterAdapter<T> filterAdapter) {
+        return new BswDbListQuery<>(this, filterAdapter);
     }
 
     /**
-     * 搜索
+     * 列表中是否包含注解相同的条目
      *
-     * @return 搜索的类
+     * @param t 泛型
+     * @return 是否有
+     */
+    public boolean has(T t) {
+        return new BswDbListQuery<>(this).has(t);
+    }
+
+    /**
+     * 更新，需配置参数的更新方式
+     *
+     * @return 更新的类
      */
     public BswDbListUpdate<T> update() {
         return new BswDbListUpdate<>(this);
+    }
+
+    /**
+     * 更新，通过适配器用户自行调整
+     *
+     * @param adapter 更新适配器
+     * @return 更新后的结果
+     */
+    public BswDbFilterList<T> update(BswDbListUpdate.ListUpdateAdapter<T> adapter) {
+        return new BswDbListUpdate<>(this).run(adapter);
     }
 
     /**
@@ -74,8 +107,18 @@ public class BswDbFilterList<T> extends ArrayList<T> {
      * @return 搜索的类
      */
     public BswDbFilterList<T> update(T t) {
+        update(t, true);
+        return this;
+    }
+
+    /**
+     * 搜索
+     *
+     * @return 搜索的类
+     */
+    public BswDbFilterList<T> update(T t, boolean isNullAdd) {
         BswDbListUpdate<T> bswDbListUpdate = new BswDbListUpdate<>(this);
-        bswDbListUpdate.update(t);
+        bswDbListUpdate.run(t, isNullAdd);
         return this;
     }
 
@@ -123,6 +166,29 @@ public class BswDbFilterList<T> extends ArrayList<T> {
                 }
                 return subList;
             }
+        }
+    }
+
+    /**
+     * 同步数据库
+     *
+     * @param mContext 上下文
+     * @param tClass   泛型的类，用于当列表为空时，清空对应表
+     */
+    public void synchronizedDb(Context mContext, Class<T> tClass) {
+        DbUtils dbUtils = new DbUtils(mContext);
+        if (size() > 0) {
+            dbUtils.update(this);
+            BswDbFilterList<T> dbList = dbUtils.where(tClass).getAll();
+            BswDbFilterList<T> deleteList = new BswDbFilterList<>();
+            for (T t : dbList) {
+                if (!has(t)) {
+                    deleteList.add(t);
+                }
+            }
+            dbUtils.delete(deleteList);
+        } else {
+            dbUtils.clear(tClass);
         }
     }
 }
