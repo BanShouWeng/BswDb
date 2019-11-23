@@ -77,6 +77,11 @@ class BswDbReflectUtils<T> {
         }
         Map<String, BswDbReflectParam> reflectResult = new HashMap<>();
         for (Field field : reflectFields) {
+            if ("serialVersionUID".equals(field.getName())          // Serializable序列化Bean时系统自动添加参数，这里不做解析
+                    || "$change".equals(field.getName())) {         // android studio2的Instant Run添加参数，这里不做解析
+                continue;
+            }
+
             field.setAccessible(true);
             String key = null;
             try {
@@ -117,6 +122,11 @@ class BswDbReflectUtils<T> {
         }
 
         for (Field field : reflectFields) {
+            if ("serialVersionUID".equals(field.getName())          // Serializable序列化Bean时系统自动添加参数，这里不做解析
+                    || "$change".equals(field.getName())) {         // android studio2的Instant Run添加参数，这里不做解析
+                continue;
+            }
+
             field.setAccessible(true);
             String key;
             try {
@@ -239,28 +249,5 @@ class BswDbReflectUtils<T> {
             }
         }
         return false;
-    }
-
-    /**
-     * 当数据改变，更新缓存
-     *
-     * @param changeData 改变的数据，或数据对应的主键
-     */
-    void dataChanged(Object changeData) {
-        if (null != changeData) {
-            T t = primaryKeyTMap.get(changeData);
-            if (null != t) {
-                primaryKeyTMap.remove(changeData);
-                reflectPrimaryKeyMap.remove(changeData);
-                reflectResultMap.remove(t);
-            } else {
-                //noinspection SuspiciousMethodCalls
-                reflectResultMap.remove(changeData);
-                //noinspection unchecked
-                Object primaryKey = getPrimaryKey((T) changeData);
-                primaryKeyTMap.remove(primaryKey);
-                reflectPrimaryKeyMap.remove(primaryKey);
-            }
-        }
     }
 }

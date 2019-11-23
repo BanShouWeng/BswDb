@@ -14,16 +14,41 @@ import java.util.Map;
 
 import static com.bsw.dblibrary.dbFilterList.BswDbFilterList.TO_THE_END;
 
+/**
+ * 数据库查找
+ *
+ * @param <T> 被查询泛型
+ */
 public class BswDbListQuery<T> {
 
+    /**
+     * 列表过滤适配器
+     */
     private final ListFilterAdapter<T> filterAdapter;
+    /**
+     * 查找列表
+     */
     private BswDbFilterList<T> list;
+    /**
+     * 反射工具类，用于反射解析待查找列表的数据
+     */
     private BswDbReflectUtils<T> reflectUtils;
 
+    /**
+     * 普通构造函数，只传入待查找列表
+     *
+     * @param list 待查找列表
+     */
     BswDbListQuery(BswDbFilterList<T> list) {
         this(list, null);
     }
 
+    /**
+     * 用于用户自定义搜索条件的查找工具
+     *
+     * @param list          待查找列表
+     * @param filterAdapter 过滤适配器
+     */
     BswDbListQuery(BswDbFilterList<T> list, ListFilterAdapter<T> filterAdapter) {
         this.list = list;
         reflectUtils = list.getReflectUtils();
@@ -212,23 +237,27 @@ public class BswDbListQuery<T> {
             return sortJudge(resultList).subList(from, count);
         } else {                                                // 搜索条件不为空则先筛选，再返回排序结果
             switch (queryType) {
+                // 与关系搜索
                 case AND:
                     for (T t : list) {
+                        // 是否满足条件判断
                         if (andJudge(t)) {
-                            if (ignoredCount < from) {
+                            if (ignoredCount < from) {  // 当有获取条目限制时（如分页），忽略数到查询起始条目前忽略
                                 ignoredCount++;
                             } else {
                                 resultList.add(t);
                             }
                         }
-                        if (count != TO_THE_END && count <= resultList.size()) {
+                        if (count != TO_THE_END && count <= resultList.size()) {// 当有获取条目限制时（如分页），查询终止条目满后跳出
                             break;
                         }
                     }
                     break;
 
+                // 或关系搜索
                 case OR:
                     for (T t : list) {
+                        // 是否满足条件判断
                         if (orJudge(t)) {
                             if (ignoredCount < from) {
                                 ignoredCount++;
@@ -278,7 +307,7 @@ public class BswDbListQuery<T> {
             case AND:
                 for (T t : sortedList) {
                     if (andJudge(t))
-                        return t;
+                        return t;           // 由于获取第一个，因此有一个满足的直接结束
                 }
                 break;
 
@@ -349,7 +378,7 @@ public class BswDbListQuery<T> {
             if (null != filterAdapter) {
                 judge = judge || filterAdapter.filter(t);
             }
-            // 若paramType没有问题，则根据当前判断是筛选条件的与判断，有一个不满足则返回，所以验证judge若为false，则不满足返回
+            // 若paramType没有问题，则根据当前判断是筛选条件的与判断，有一个满足则返回，所以验证judge若为true，则满足返回
             if (judge) {
                 return true;
             }
@@ -360,24 +389,29 @@ public class BswDbListQuery<T> {
     /**
      * 排序判断
      *
-     * @param list 排序的列表
+     * @param listForSort 待排序的列表
      * @return 排序后的列表
      */
-    private synchronized BswDbFilterList<T> sortJudge(BswDbFilterList<T> list) {
+    private synchronized BswDbFilterList<T> sortJudge(BswDbFilterList<T> listForSort) {
         if (TextUtils.isEmpty(sortKey)) {
-            return list;
+            return listForSort;
         } else {
+            // 排序判断条件
             List<Object> sortJudgeList = new ArrayList<>();
+            // 排序结果
             BswDbFilterList<T> sortList = new BswDbFilterList<>();
-            for (T t : list) {
+            for (T t : listForSort) {
                 Map<String, BswDbReflectParam> reflectResult = reflectUtils.getReflectResult(t);
+                // 若无法解析，或解析结果有误，则跳过
                 if (null == reflectResult || reflectResult.size() == 0) {
                     continue;
                 }
+                // 若待排序项无满足排序条件的属性，则跳过
                 BswDbReflectParam param = reflectResult.get(sortKey);
                 if (null == param) {
                     continue;
                 }
+                // 若有满足排序条件的属性，但是该属性为空，则将该条目派到列表最后
                 Object item = param.getValue();
                 if (null == item) {
                     sortList.add(sortList.size(), t);

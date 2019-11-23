@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="Gradle: com.github.BanShouWeng:BswDb:1.0.2@aar">
+    <ANNOTATIONS>
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/8735027e25097dec64bc4ed691c79352/annotations.zip!/" />
+    </ANNOTATIONS>
+    <CLASSES>
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/8735027e25097dec64bc4ed691c79352/res" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/8735027e25097dec64bc4ed691c79352/jars/classes.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.BanShouWeng/BswDb/1.0.2/86428283053a2092a6becfd9d99b3453ca173c84/BswDb-1.0.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

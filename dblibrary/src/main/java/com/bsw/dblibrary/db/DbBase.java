@@ -198,6 +198,11 @@ public class DbBase {
         // 避免主键重复获取
         boolean addedPrimaryKey = false;
         for (Field field : fields) {
+            if ("serialVersionUID".equals(field.getName())          // Serializable序列化Bean时系统自动添加参数，这里不做解析
+                    || "$change".equals(field.getName())) {         // android studio的Instant Run添加参数，这里不做解析
+                continue;
+            }
+
             field.setAccessible(true);
             if (field.isAnnotationPresent(Ignore.class)) {          // 忽略参数过滤
                 continue;
