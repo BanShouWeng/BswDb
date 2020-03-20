@@ -138,6 +138,30 @@ public class DbManager {
     }
 
     /**
+     * 查询
+     *
+     * @param tableName     表名
+     * @param columns       搜索的列表
+     * @param selection     筛选条件（eg:"_id=?"）
+     * @param selectionArgs 筛选的内容 （eg:new String[] { "01" } ）
+     * @param groupBy       分组
+     * @param having        分组
+     * @param orderBy       排序
+     * @param limit         分页约束条件
+     * @return mCursor 游标
+     */
+    Cursor mQuery(String tableName, String[] columns, String selection,
+                  String[] selectionArgs, String groupBy, String having,
+                  String orderBy, String limit) {
+        mSQLiteDatabase = mSQLiteOpenHelper.getWritableDatabase();
+        try {
+            return mSQLiteDatabase.query(tableName, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
+        } catch (SQLiteException exception) {
+            return null;
+        }
+    }
+
+    /**
      * 查询全部(查询后需要在调用的类中手动调用closeAll()方法来关闭全部函数)
      *
      * @param tableName 表名

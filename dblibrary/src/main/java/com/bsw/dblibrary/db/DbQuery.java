@@ -6,9 +6,12 @@ import android.text.TextUtils;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
+import com.bsw.dblibrary.CommonUtils;
 import com.bsw.dblibrary.Logger;
 import com.bsw.dblibrary.dbFilterList.BswDbFilterList;
 import com.google.gson.Gson;
@@ -36,6 +39,15 @@ public class DbQuery<T> extends DbBase {
 
     private String sortString = null;
     private String queryType = AND;
+
+    /**
+     * 分页单页显示数量
+     */
+    private int pageSize = 0;
+    /**
+     * 分页页码
+     */
+    private int pageIndex = 0;
 
     private Logger logger = new Logger();
 
@@ -72,6 +84,19 @@ public class DbQuery<T> extends DbBase {
     public DbQuery<T> putParams(String key, Object value) {
         initQueryMap();
         queryList.add(new Param(key, value));
+        return this;
+    }
+
+    /**
+     * 分页查询数据
+     *
+     * @param pageIndex 页码
+     * @param pageSize  单页条数
+     * @return 查询类
+     */
+    public DbQuery<T> forPaging(int pageIndex, int pageSize) {
+        this.pageIndex = pageIndex;
+        this.pageSize = pageSize;
         return this;
     }
 
@@ -201,25 +226,54 @@ public class DbQuery<T> extends DbBase {
      * @return 满足条件的数据库游标
      */
     private Cursor getCursor() {
+        Map<String, Object> format = formatSelection();
+        String selection = (String) format.get("selection");
+        String[] selectionArgs = (String[]) format.get("selectionArgs");
+        //noinspection unchecked
+        List<String> selectionArgList = (List<String>) format.get("selectionArgList");
+
+        if (0 == (pageIndex + pageSize)) {
+            return dbUtils.mDbManager.mQuery(tableName
+                    , null
+                    , TextUtils.isEmpty(selection) ? null : (selection.substring(0, selection.length() - (AND.equals(queryType) ? 5 : 4)))
+                    , null == selectionArgs ? null : selectionArgList.toArray(selectionArgs)
+                    , null
+                    , null
+                    , TextUtils.isEmpty(sortString) ? dbUtils.UPDATE_TIME.concat(DESC) : sortString);
+        } else {
+            int offset = (pageIndex - 1) * pageSize;
+            return dbUtils.mDbManager.mQuery(tableName
+                    , null
+                    , TextUtils.isEmpty(selection) ? null : (selection.substring(0, selection.length() - (AND.equals(queryType) ? 5 : 4)))
+                    , null == selectionArgs ? null : selectionArgList.toArray(selectionArgs)
+                    , null
+                    , null
+                    , TextUtils.isEmpty(sortString) ? dbUtils.UPDATE_TIME.concat(DESC) : sortString
+                    , String.format(Locale.getDefault(), "%d,%d", offset, pageSize));
+        }
+    }
+
+    private Map<String, Object> formatSelection() {
         StringBuilder selectionBuffer = new StringBuilder();
         List<String> selectionArgList = new ArrayList<>();
 
-        if (null != queryList && queryList.size() > 0) {
+        String selection = null;
+        String[] selectionArgs = null;
+        if (CommonUtils.judgeListNull(queryList) != 0) {
             for (Param param : queryList) {
                 selectionBuffer.append(param.key).append("=?".concat(queryType));
                 selectionArgList.add(param.getValue());
             }
-            String selection = selectionBuffer.toString();
-            String[] selectionArgs = new String[selectionArgList.size()];
+            selection = selectionBuffer.toString();
+            selectionArgs = new String[selectionArgList.size()];
             logger.i(selection);
             logger.i(selectionArgList.toString());
-            return dbUtils.mDbManager.mQuery(tableName, null, selection.substring(0, selection.length() - (AND.equals(queryType) ? 5 : 4))
-                    , selectionArgList.toArray(selectionArgs), null, null, TextUtils.isEmpty(sortString) ? dbUtils.UPDATE_TIME.concat(DESC) : sortString);
-
-        } else {
-            return dbUtils.mDbManager.mQuery(tableName, null, null
-                    , null, null, null, TextUtils.isEmpty(sortString) ? dbUtils.UPDATE_TIME.concat(DESC) : sortString);
         }
+        Map<String, Object> format = new HashMap<>();
+        format.put("selection", selection);
+        format.put("selectionArgs", selectionArgs);
+        format.put("selectionArgList", selectionArgList);
+        return format;
     }
 
     /**
@@ -232,6 +286,9 @@ public class DbQuery<T> extends DbBase {
     private void insertValue(Object o, Cursor mCursor) throws IllegalAccessException {
         for (String key : columnMap.keySet()) {
             ColumnPojo pojo = columnMap.get(key);
+            if (null == pojo){
+                return;
+            }
             switch (pojo.getType()) {
                 case INT:
                     pojo.getField().set(o, mCursor.getInt(mCursor.getColumnIndex(key)));
@@ -257,6 +314,8 @@ public class DbQuery<T> extends DbBase {
                 case BOOLEAN:
                     pojo.getField().set(o, Boolean.valueOf(mCursor.getString(mCursor.getColumnIndex(key))));
                     break;
+                default:
+                    break;
             }
         }
     }
@@ -270,7 +329,7 @@ public class DbQuery<T> extends DbBase {
             this.value = value;
         }
 
-        public String getValue() {
+        String getValue() {
             return new Gson().toJson(value);
         }
     }

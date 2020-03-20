@@ -23,12 +23,6 @@ public class Person {
     private boolean sex = true;
     @Require
     private long time = System.currentTimeMillis();
-    @Require
-    private float pay = 15.5f;
-    @Require
-    private double earn = 77.745;
-    @Require
-    private byte type = 3;
 
     @Ignore
     private String ignore = "ignore";
@@ -48,6 +42,12 @@ public class Person {
 
     }
 
+    public Person(String name, int age, boolean sex) {
+        this.name = name;
+        this.age = age;
+        this.sex = sex;
+    }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -60,9 +60,6 @@ public class Person {
                 ", age=" + age +
                 ", sex=" + sex +
                 ", time=" + time +
-                ", pay=" + pay +
-                ", earn=" + earn +
-                ", type=" + type +
                 '}';
     }
 }

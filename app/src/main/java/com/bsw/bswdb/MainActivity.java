@@ -8,6 +8,7 @@ import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.bsw.bswdb.DbDemoBean.Person;
 import com.bsw.dblibrary.Logger;
 import com.bsw.dblibrary.db.DbBase;
 import com.bsw.dblibrary.db.DbQuery;
@@ -17,6 +18,12 @@ import com.bsw.dblibrary.dbFilterList.BswDbListQuery;
 
 import java.util.List;
 
+/**
+ * 演示Activity
+ *
+ * @author 半寿翁
+ * @date 2020-03-19 改
+ */
 public class MainActivity extends AppCompatActivity {
 
     private DbUtils dbUtils;
@@ -30,23 +37,13 @@ public class MainActivity extends AppCompatActivity {
 
         dbUtils = new DbUtils(getApplicationContext());
 
-//        KBswFilterList<Person> people = new KBswFilterList<>();
-//        people.add(new Person("john", 5, true));
-//        people.add(new Person("tony", 95, true));
-//        people.add(new Person("jerry", 20, false));
-//        people.add(new Person("lina", 26, false));
-//
-//        Log.i(getClass().getSimpleName(), people.query().sort("age", KBswListQuery.DESC).getAll().toString());
-//        Log.i(getClass().getSimpleName(), people.query().putParams("age", 5).putParams("sex", false).setQueryType(KBswListQuery.OR).getAll().toString());
-//        Log.i(getClass().getSimpleName(), people.query().putParams("age", 5).putParams("sex", false).setQueryType(KBswListQuery.OR).getFirst().toString());
-
         BswDbFilterList<Person> people = new BswDbFilterList<>();
         people.add(new Person("john", 5, true));
         people.add(new Person("tony", 95, true));
         people.add(new Person("jerry", 20, false));
         people.add(new Person("lina", 26, false));
-//        people.synchronizedDb(this,Person.class);
 
+        Log.i(getClass().getSimpleName(), people.query().sort("age", BswDbListQuery.DESC).getAll().toString());
         Log.i(getClass().getSimpleName(), people.query().sort("age", BswDbListQuery.DESC).getAll().toString());
         Log.i(getClass().getSimpleName(), people.query().putParams("age", 5).putParams("sex", false).setQueryType(BswDbListQuery.OR).getAll().toString());
         Log.i(getClass().getSimpleName(), people.query().putParams("age", 5).putParams("sex", false).setQueryType(BswDbListQuery.OR).getFirst().toString());
@@ -63,11 +60,10 @@ public class MainActivity extends AppCompatActivity {
         dbUtils.executeTransaction(new DbUtils.OnTransaction() {
             @Override
             public void execute(DbUtils dbUtils) {
-                com.bsw.bswdb.DbDemoBean.Person person = new com.bsw.bswdb.DbDemoBean.Person(Integer.valueOf(((EditText) findViewById(R.id.id)).getText().toString().trim())
+                Person person = new com.bsw.bswdb.DbDemoBean.Person(Integer.valueOf(((EditText) findViewById(R.id.id)).getText().toString().trim())
                         , ((EditText) findViewById(R.id.name)).getText().toString().trim()
                         , Integer.valueOf(((EditText) findViewById(R.id.age)).getText().toString().trim()));
                 logger.i((dbUtils.update(person) ? "创建成功:" : "修改成功") + person.toString());
-//                dbUtils.update(new Dog(UUID.randomUUID()));
             }
         });
     }
@@ -108,16 +104,33 @@ public class MainActivity extends AppCompatActivity {
                 for (com.bsw.bswdb.DbDemoBean.Person p : persons) {
                     logger.i(getClass().getSimpleName(), p.toString());
                 }
+            }
+        });
+    }
 
-
-//                List<Dog> dogs = dbUtils.where(Dog.class).getAll();
-//                if (null == dogs || dogs.size() == 0) {
-//                    logger.e("没有狗");
-//                    return;
-//                }
-//                for (Dog dog : dogs) {
-//                    logger.i(getClass().getSimpleName(), dog.toString());
-//                }
+    /**
+     * 获取分页数据
+     *
+     * @param view 被点击控件
+     */
+    public void getPaging(View view) {
+        dbUtils.executeTransaction(new DbUtils.OnTransaction() {
+            @Override
+            public void execute(DbUtils dbUtils) {
+                try {
+                    int pageIndex = Integer.parseInt(((EditText) findViewById(R.id.page_index)).getText().toString().trim());
+                    int pageSize = Integer.parseInt(((EditText) findViewById(R.id.page_size)).getText().toString().trim());
+                    List<Person> persons = dbUtils.where(Person.class).forPaging(pageIndex, pageSize).getAll();
+                    if (null == persons || persons.size() == 0) {
+                        logger.e("没有人");
+                        return;
+                    }
+                    for (com.bsw.bswdb.DbDemoBean.Person p : persons) {
+                        logger.i(getClass().getSimpleName(), p.toString());
+                    }
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }

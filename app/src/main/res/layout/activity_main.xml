@@ -9,17 +9,20 @@
         android:id="@+id/id"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:hint="id"
         android:inputType="number" />
 
     <EditText
         android:id="@+id/name"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:hint="姓名" />
 
     <EditText
         android:id="@+id/age"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:hint="年龄"
         android:inputType="number" />
 
     <Button
@@ -47,6 +50,34 @@
             android:onClick="getAll"
             android:text="获得全部" />
     </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/page_index"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="页码"
+            android:inputType="number" />
+
+        <EditText
+            android:id="@+id/page_size"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="单页显示数量"
+            android:inputType="number" />
+    </LinearLayout>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="getPaging"
+        android:text="查看分页" />
 
     <LinearLayout
         android:layout_width="match_parent"

@@ -4,6 +4,8 @@ import androidx.annotation.IntDef;
 import androidx.annotation.IntRange;
 import androidx.annotation.StringDef;
 
+import com.bsw.dblibrary.db.DbQuery;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
@@ -224,10 +226,11 @@ public class BswDbListQuery<T> {
 
         BswDbFilterList<T> resultList = new BswDbFilterList<>();
 
-        if (null == queryList || queryList.size() == 0) {       // 搜索条件为空则直接返回排序结果
-            if (null == filterAdapter)
+        if (null == queryList || queryList.size() == 0) {
+            // 搜索条件为空则直接返回排序结果
+            if (null == filterAdapter) {
                 resultList = list;
-            else {
+            } else {
                 for (T t : list) {
                     if (filterAdapter.filter(t)) {
                         resultList.add(t);
@@ -235,20 +238,23 @@ public class BswDbListQuery<T> {
                 }
             }
             return sortJudge(resultList).subList(from, count);
-        } else {                                                // 搜索条件不为空则先筛选，再返回排序结果
+        } else {
+            // 搜索条件不为空则先筛选，再返回排序结果
             switch (queryType) {
                 // 与关系搜索
                 case AND:
                     for (T t : list) {
                         // 是否满足条件判断
                         if (andJudge(t)) {
-                            if (ignoredCount < from) {  // 当有获取条目限制时（如分页），忽略数到查询起始条目前忽略
+                            if (ignoredCount < from) {
+                                // 当有获取条目限制时（如分页），忽略数到查询起始条目前忽略
                                 ignoredCount++;
                             } else {
                                 resultList.add(t);
                             }
                         }
-                        if (count != TO_THE_END && count <= resultList.size()) {// 当有获取条目限制时（如分页），查询终止条目满后跳出
+                        if (count != TO_THE_END && count <= resultList.size()) {
+                            // 当有获取条目限制时（如分页），查询终止条目满后跳出
                             break;
                         }
                     }
@@ -269,6 +275,9 @@ public class BswDbListQuery<T> {
                             }
                         }
                     }
+                    break;
+
+                default:
                     break;
             }
             // 添加的时候已经做好了筛选
@@ -300,22 +309,29 @@ public class BswDbListQuery<T> {
         if (TextUtils.isEmpty(sortKey)) {
             reflectUtils.reflectList(sortedList);
             sortedList = sortJudge(list);
-        } else
+        } else {
             sortedList = list;
+        }
 
         switch (queryType) {
             case AND:
                 for (T t : sortedList) {
-                    if (andJudge(t))
-                        return t;           // 由于获取第一个，因此有一个满足的直接结束
+                    if (andJudge(t)) {
+                        // 由于获取第一个，因此有一个满足的直接结束
+                        return t;
+                    }
                 }
                 break;
 
             case OR:
                 for (T t : sortedList) {
-                    if (orJudge(t))
+                    if (orJudge(t)) {
                         return t;
+                    }
                 }
+                break;
+
+            default:
                 break;
         }
         return null;
@@ -448,7 +464,18 @@ public class BswDbListQuery<T> {
         }
     }
 
+    /**
+     * 列表过滤适配器
+     *
+     * @param <T> 查看条目
+     */
     public interface ListFilterAdapter<T> {
+        /**
+         * 依据过滤是否添加
+         *
+         * @param t 被判断条目
+         * @return 是否符合条件
+         */
         boolean filter(T t);
     }
 }

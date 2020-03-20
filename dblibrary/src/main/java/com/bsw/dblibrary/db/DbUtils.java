@@ -14,12 +14,16 @@ import java.util.concurrent.Executors;
  * @author bsw
  */
 public class DbUtils extends DbBase {
-    String dbName = "bsw.db";// 数据库名
-    public int version = 1;// 版本号
+    /**
+     * 数据库名
+     */
+    String dbName = "bswTest.db";
+    /**
+     * 版本号
+     */
+    public int version = 1;
     DbManager mDbManager;
     Context mContext;
-
-    private Cursor mCursor;
 
     public DbUtils(Context mContext) {
         this.mContext = mContext;
@@ -156,6 +160,8 @@ public class DbUtils extends DbBase {
                 case BOOLEAN:
                     contentValues.put(primaryKeyPojo.getName(), (String) primaryKeyPojo.getValue());
                     break;
+                default:
+                    break;
             }
         }
         if (null != columnPojos && columnPojos.size() > 0) {
@@ -189,6 +195,8 @@ public class DbUtils extends DbBase {
                         break;
                     case BOOLEAN:
                         contentValues.put(columnPojo.getName(), String.valueOf(columnPojo.getValue()));
+                        break;
+                    default:
                         break;
                 }
                 if (null != dbCreate) {
